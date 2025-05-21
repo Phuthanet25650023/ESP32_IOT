@@ -41,7 +41,7 @@ int State[5][?] =
 
 void setup() {
   Serial.begin (115200);
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < ?; i++) {
     pinMode(LED_PIN[i], OUTPUT);
   }
   pinMode(buttonPin1, INPUT_PULLUP);
