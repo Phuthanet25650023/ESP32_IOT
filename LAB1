@@ -30,7 +30,7 @@ int LED_PIN[] = {19, 18, 5, 17 ,?};
 int buttonPin1 = 26;
 int buttonPin2 = 27;
 
-int State[5][4] =
+int State[5][?] =
 {
   {0, 1, 0, 1, 0},
   {1, 0, 0, 0, 1},
