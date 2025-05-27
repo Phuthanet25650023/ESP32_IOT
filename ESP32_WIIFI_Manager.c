@@ -136,3 +136,154 @@ void loop() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// LAB 3_3 ///////////////////////////////////////////
+#include <WiFi.h>
+#include <WiFiManager.h>
+#include <WebServer.h>
+
+#define RESET_BUTTON 0 // GPIO 0 = ปุ่ม Reset WiFi
+
+WebServer server(80); // สร้าง WebServer ที่พอร์ต 80
+
+float temperature = 0; // ตัวแปรจำลองอุณหภูมิ (สามารถแทนด้วย sensor จริงได้)
+
+// API endpoint: /temperature → ตอบกลับ JSON
+void handleTemperature() {
+  String json = "{ \"temperature\": ";
+  json += random(50, 151); // temperature
+  json += " }";
+  server.send(200, "application/json", json);
+}
+
+// Root webpage → HTML สวยงาม
+void handleRoot() {
+  String html = R"rawliteral(
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>ESP32 Temperature Monitor</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          text-align: center;
+          background: #f0f0f5;
+          color: #333;
+          margin: 0;
+          padding: 0;
+        }
+        header {
+          background: #3f51b5;
+          color: white;
+          padding: 20px 0;
+          font-size: 24px;
+          font-weight: bold;
+        }
+        .content {
+          margin-top: 40px;
+        }
+        .temperature {
+          font-size: 48px;
+          margin: 20px 0;
+          color: #e91e63;
+        }
+        .api {
+          margin-top: 30px;
+          font-size: 16px;
+        }
+        a {
+          color: #3f51b5;
+          text-decoration: none;
+        }
+        a:hover {
+          text-decoration: underline;
+        }
+        footer {
+          margin-top: 50px;
+          font-size: 14px;
+          color: #999;
+        }
+      </style>
+      <script>
+        function fetchTemperature() {
+          fetch('/temperature')
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('temp').textContent = data.temperature + ' C';
+            });
+        }
+        setInterval(fetchTemperature, 3000); // ดึงข้อมูลทุก 5 วินาที
+        window.onload = fetchTemperature;    // ดึงข้อมูลทันทีเมื่อโหลด
+      </script>
+    </head>
+    <body>
+      <header>
+        ESP32 Temperature Monitor
+      </header>
+      <div class="content">
+        <p class="temperature" id="temp">-- °C</p>
+        <div class="api">
+          API Endpoint: <a href="/temperature">/temperature</a>
+        </div>
+      </div>
+      <footer>
+        &copy; 2025 ESP32 Project
+      </footer>
+    </body>
+    </html>
+  )rawliteral";
+
+  server.send(200, "text/html", html);
+}
+
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(RESET_BUTTON, INPUT_PULLUP);
+
+  WiFiManager wm;
+
+  // Optional: Static IP
+  IPAddress staticIP(192, 168, 1, 200);
+  IPAddress gateway(192, 168, 1, 1);
+  IPAddress subnet(255, 255, 255, 0);
+  IPAddress dns(8, 8, 8, 8);
+  wm.setSTAStaticIPConfig(staticIP, gateway, subnet, dns);
+
+  if (!wm.autoConnect("ESP32_Setup", "12345678")) {
+    Serial.println("❌ Failed to connect → Restarting...");
+    ESP.restart();
+  }
+
+  Serial.println("✅ Connected to WiFi");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", handleRoot);
+  server.on("/temperature", handleTemperature);
+  server.begin();
+  Serial.println("🌐 WebServer started");
+}
+
+void loop() {
+  // ปุ่ม Reset WiFi
+  if (digitalRead(RESET_BUTTON) == LOW) {
+    Serial.println("🔄 Resetting WiFi settings...");
+    delay(1000);
+    WiFiManager wm;
+    wm.resetSettings();
+    ESP.restart();
+  }
+
+  // เช็ค WiFi หลุด
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("⚠️ WiFi disconnected. Reconnecting...");
+    WiFi.reconnect();
+    delay(5000);
+  }
+
+  server.handleClient();
+  delay(100);
+}
+////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// LAB 3 ///////////////////////////////////////////
