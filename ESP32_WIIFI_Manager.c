@@ -150,7 +150,19 @@ float temperature = 0; // ตัวแปรจำลองอุณหภูม
 // API endpoint: /temperature → ตอบกลับ JSON
 void handleTemperature() {
   String json = "{ \"temperature\": ";
-  json += random(50, 151); // temperature
+  json += random(100, 300) / 10.0; // temperature
+  json += " }";
+  server.send(200, "application/json", json);
+}
+void handleTemperature2() {
+  String json = "{ \"temperature\": ";
+  json += random(200, 300) / 10.0; // temperature
+  json += " }";
+  server.send(200, "application/json", json);
+}
+void handleTemperature3() {
+  String json = "{ \"temperature\": ";
+  json += random(300, 1000) / 10.0; // temperature
   json += " }";
   server.send(200, "application/json", json);
 }
@@ -209,19 +221,35 @@ void handleRoot() {
           fetch('/temperature')
             .then(response => response.json())
             .then(data => {
-              document.getElementById('temp').textContent = data.temperature + ' C';
+              document.getElementById('temp1').textContent ="Data "+ data.temperature + ' C';
+            });
+
+          fetch('/temperature2')
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('temp2').textContent ="Temp "+ data.temperature + ' C';
+            });
+
+          fetch('/temperature3')
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('temp3').textContent = "Sensor "+data.temperature + ' C';
             });
         }
         setInterval(fetchTemperature, 3000); // ดึงข้อมูลทุก 5 วินาที
         window.onload = fetchTemperature;    // ดึงข้อมูลทันทีเมื่อโหลด
       </script>
+
+
     </head>
     <body>
       <header>
         ESP32 Temperature Monitor
       </header>
       <div class="content">
-        <p class="temperature" id="temp">-- °C</p>
+        <p class="temperature" id="temp1">-- °C</p>
+        <p class="temperature" id="temp2">-- °C</p>
+        <p class="temperature" id="temp3">-- °C</p>
         <div class="api">
           API Endpoint: <a href="/temperature">/temperature</a>
         </div>
@@ -261,6 +289,8 @@ void setup() {
 
   server.on("/", handleRoot);
   server.on("/temperature", handleTemperature);
+  server.on("/temperature2", handleTemperature2);
+  server.on("/temperature3", handleTemperature3);
   server.begin();
   Serial.println("🌐 WebServer started");
 }
@@ -285,5 +315,6 @@ void loop() {
   server.handleClient();
   delay(100);
 }
+
 ////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// LAB 3 ///////////////////////////////////////////
