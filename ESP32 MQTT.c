@@ -97,3 +97,88 @@ void loop() {
 }
 ////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// LAB Send ///////////////////////////////////////////
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
+
+#define topic1 "MIIX/006/1"
+const char* ssid = "Elite_Ultimate_2.4G";
+const char* password = "24776996";
+const char* mqtt_server = "broker.emqx.io";
+int port = 1883;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+unsigned long lastSend = 0;
+const long sendInterval = 5000;  // ส่งข้อมูลทุก 5 วินาที
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    String clientId = "ESP32Client-";
+    clientId += String(random(0xffff), HEX);
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // ถ้าต้องการ subscribe topic อื่น ๆ ก็ทำตรงนี้
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  setup_wifi();
+  client.setServer(mqtt_server, port);
+  // ไม่ต้องใช้ callback เพราะไม่ subscribe ในโค้ดนี้
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  // ส่งข้อมูลทุก 5 วินาที
+  if (millis() - lastSend > sendInterval) {
+    lastSend = millis();
+
+    // สร้าง JSON Document
+    StaticJsonDocument<200> doc;
+    doc["device"] = 1;                 // รหัสอุปกรณ์
+    doc["value1"] = random(0, 101);   // ส่งค่า value1 แบบสุ่ม 0-100
+    doc["value2"] = random(0, 201);   // ส่งค่า value2 แบบสุ่ม 0-200
+
+    char buffer[256];
+    size_t n = serializeJson(doc, buffer);
+
+    // ส่งข้อมูลไปยัง topic1
+    if (client.publish(topic1, buffer, n)) {
+      Serial.print("Published message: ");
+      Serial.println(buffer);
+    } else {
+      Serial.println("Failed to publish message");
+    }
+  }
+}
+/////////////////////////////////////////////////////////////////////////////////
