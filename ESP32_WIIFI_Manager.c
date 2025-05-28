@@ -110,14 +110,14 @@ void setup() {
     ESP.restart();
   }
 
-  Serial.println("✅ เชื่อมต่อ WiFi แล้ว");
+  Serial.println(" เชื่อมต่อ WiFi แล้ว");
   Serial.println(WiFi.localIP());
 }
 
 void loop() {
-  // 🟢 เช็คว่ากดปุ่ม Reset หรือไม่
+  //  เช็คว่ากดปุ่ม Reset หรือไม่
   if (digitalRead(RESET_BUTTON) == LOW) {
-    Serial.println("🔄 รีเซ็ต WiFi settings แล้วเข้าสู่ WiFiManager ใหม่...");
+    Serial.println(" รีเซ็ต WiFi settings แล้วเข้าสู่ WiFiManager ใหม่...");
     delay(1000); // ป้องกันการกดค้าง
     WiFiManager wm;
     wm.resetSettings();  // ลบ WiFi ที่บันทึกไว้
@@ -126,7 +126,7 @@ void loop() {
 
   // 🔁 เช็คการหลุด WiFi และเชื่อมใหม่
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("⚠️ WiFi หลุด! กำลัง reconnect...");
+    Serial.println(" WiFi หลุด! กำลัง reconnect...");
     WiFi.reconnect();
     delay(5000);
   }
@@ -279,11 +279,11 @@ void setup() {
   wm.setSTAStaticIPConfig(staticIP, gateway, subnet, dns);
 
   if (!wm.autoConnect("ESP32_Setup", "12345678")) {
-    Serial.println("❌ Failed to connect → Restarting...");
+    Serial.println(" Failed to connect → Restarting...");
     ESP.restart();
   }
 
-  Serial.println("✅ Connected to WiFi");
+  Serial.println(" Connected to WiFi");
   Serial.print("IP: ");
   Serial.println(WiFi.localIP());
 
@@ -292,13 +292,13 @@ void setup() {
   server.on("/temperature2", handleTemperature2);
   server.on("/temperature3", handleTemperature3);
   server.begin();
-  Serial.println("🌐 WebServer started");
+  Serial.println(" WebServer started");
 }
 
 void loop() {
   // ปุ่ม Reset WiFi
   if (digitalRead(RESET_BUTTON) == LOW) {
-    Serial.println("🔄 Resetting WiFi settings...");
+    Serial.println(" Resetting WiFi settings...");
     delay(1000);
     WiFiManager wm;
     wm.resetSettings();
@@ -307,7 +307,7 @@ void loop() {
 
   // เช็ค WiFi หลุด
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("⚠️ WiFi disconnected. Reconnecting...");
+    Serial.println("⚠ WiFi disconnected. Reconnecting...");
     WiFi.reconnect();
     delay(5000);
   }
