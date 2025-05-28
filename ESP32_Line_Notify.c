@@ -3,10 +3,10 @@
 #include <WiFiMulti.h>
 #include <ArtronShop_LineMessaging.h>
 
-#define WIFI_SSID "Elite_ULtimate_2.4G" // WiFi Name
-#define WIFI_PASSWORD "24776996" // WiFi Password
+#define WIFI_SSID "ชื่อ_WIFI.4G" // WiFi Name
+#define WIFI_PASSWORD "รหัส_WIFI" // WiFi Password
 
-#define LINE_TOKEN "fsmvBz/xXpsRxnyQrZTKPuc3Aw6TDJeR67Q5vcuUeD7dqcBoqxwtVDfYXTLqFxhC7/3AzJXnhUFqPUuu6TF2PEb5uJHnUwk9BJ61RNzzK1hm+FCi67hWMPUttq2SWLrk97LgF8aVJubZa5SUNeu3uQdB04t89/1O/w1cDnyilFU=" // Channel access token
+#define LINE_TOKEN "Token" // Channel access token
 
 WiFiMulti wifiMulti;
 
@@ -30,7 +30,7 @@ void setup() {
 
   LINE.begin(LINE_TOKEN);
 
-  if (LINE.send("U30199332a9032acc6ff7b548e7246438", "Hello from ESP32 !")) { // Send "Hello from ESP32 !" to LINE with User/Group ID
+  if (LINE.send("User/Group ID", "Hello from ESP32 !")) { // Send "Hello from ESP32 !" to LINE with User/Group ID
     Serial.println("Send notify successful");
   } else {
     Serial.printf("Send notify fail. check your token (code: %d)\n", LINE.status_code);
@@ -40,3 +40,18 @@ void setup() {
 void loop() {
   
 }
+
+
+
+//////////////////////////////////////// Stricker ///////////////////////////////////////
+  LINE_Messaging_Massage_Option_t option; // สร้างตัวแปร option
+
+  // ดูรายการสติ๊กเกอร์ที่รองรับได้ที่ https://developers.line.biz/en/docs/messaging-api/sticker-list/
+  option.sticker.package_id = 446; // สติ๊กเกอร์ Package ID
+  option.sticker.id = 1988; // สติ๊กเกอร์ ID
+
+  if (LINE.send("User ID/Group ID", "รถโดนขโมย", &option)) { // ส่งข้อความ "รถโดนขโมย" ไปที่ LINE
+    Serial.println("Send notify successful"); // ส่งข้อความ "Send notify successful" ไปที่ Serial Monitor
+  } else { // ถ้าส่งไม่สำเร็จ
+    Serial.printf("Send notify fail. check your token (code: %d)\n", LINE.status_code); // ส่งข้อความ "Send notify fail" ไปที่ Serial Monitor
+  }
