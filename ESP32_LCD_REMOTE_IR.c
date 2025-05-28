@@ -1,4 +1,71 @@
-////////////////////////////////////////////////////// LAB //////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////// LAB 1 ///////////////////////////////////////////////////////
+#include <IRremote.h>
+#include <LiquidCrystal_I2C.h>
+
+#define PIN_RECEIVER 35
+#define LED 33
+
+IRrecv receiver(PIN_RECEIVER);
+LiquidCrystal_I2C lcd(0x27, 20, 4);
+
+int VLED = 0;
+unsigned long lastCommand = 0;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+  receiver.enableIRIn();
+  lcd.init();
+  lcd.backlight();
+  
+  lcd.setCursor(5, 0);
+  lcd.print("Mahanakorn");
+  lcd.setCursor(0, 1);
+  lcd.print("University");
+}
+
+void loop() {
+  if (receiver.decode()) {
+    int command = receiver.decodedIRData.command;
+
+    // กันการทำซ้ำจากปุ่มเดิม
+    if (command != lastCommand) {
+      lastCommand = command;
+
+      lcd.setCursor(0, 2);
+      lcd.print("CMD: ");
+      lcd.print(command);
+      lcd.print("     ");
+
+      switch (command) {
+        case 2:  // ปุ่มเปิด/ปิด LED (เช่น Power)
+          VLED = !VLED;
+          digitalWrite(LED, VLED);
+          break;
+
+        case 70:  // แสดงข้อความ
+          lcd.setCursor(0, 2);
+          lcd.print("Computer Engineering");
+          break;
+
+        case 152:  // เคลียร์หน้าจอ
+          lcd.clear();
+          break;
+
+        default:
+          lcd.setCursor(0, 3);
+          lcd.print("Unknown Command   ");
+          break;
+      }
+    }
+
+    receiver.resume();
+  }
+
+  delay(10);
+}
+
+
+////////////////////////////////////////////////////// LAB 2 //////////////////////////////////////////////////////////
 #include <IRremote.h>
 #include <LiquidCrystal_I2C.h>
 #define PIN_RECEIVER 35
