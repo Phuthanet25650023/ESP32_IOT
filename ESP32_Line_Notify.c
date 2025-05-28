@@ -47,11 +47,23 @@ void loop() {
   LINE_Messaging_Massage_Option_t option; // สร้างตัวแปร option
 
   // ดูรายการสติ๊กเกอร์ที่รองรับได้ที่ https://developers.line.biz/en/docs/messaging-api/sticker-list/
-  option.sticker.package_id = 446; // สติ๊กเกอร์ Package ID
-  option.sticker.id = 1988; // สติ๊กเกอร์ ID
+  option.sticker.package_id = 789; // สติ๊กเกอร์ Package ID
+  option.sticker.id = 10884; // สติ๊กเกอร์ ID
 
-  if (LINE.send("User ID/Group ID", "รถโดนขโมย", &option)) { // ส่งข้อความ "รถโดนขโมย" ไปที่ LINE
+  if (LINE.send("User ID/Group ID", "ข้อความ", &option)) { // ส่งข้อความ "ข้อความ" ไปที่ LINE
     Serial.println("Send notify successful"); // ส่งข้อความ "Send notify successful" ไปที่ Serial Monitor
   } else { // ถ้าส่งไม่สำเร็จ
     Serial.printf("Send notify fail. check your token (code: %d)\n", LINE.status_code); // ส่งข้อความ "Send notify fail" ไปที่ Serial Monitor
+  }
+
+
+////////////////////////////////// รูปภาพ ///////////////////////////////////////////////
+  LINE_Messaging_Massage_Option_t option; // สร้างตัวแปร option
+
+  option.image.url = "https://img5.pic.in.th/file/secure-sv1/imagebb0cd15de6ef0b4b.png"; // ลิ้งรูป ไฟล์ JPEG ขนาดไม่เกิน 2048×2048px
+
+  if (LINE.send("User ID/Group ID", "รถโดยขโมย", &option)) { // ส่งข้อความ "รถโดนขโมย" ไปที่ LINE
+    Serial.println("Send notify successful");
+  } else {
+    Serial.printf("Send notify fail. check your token (code: %d)\n", LINE.status_code);
   }
