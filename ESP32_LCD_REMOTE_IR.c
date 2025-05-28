@@ -1,4 +1,8 @@
 /////////////////////////////////////////////////////// LAB 1 ///////////////////////////////////////////////////////
+
+// https://maxpromer.github.io/LCD-Character-Creator/
+// https://docs.wokwi.com/parts/wokwi-ir-remote
+
 #include <IRremote.h>
 #include <LiquidCrystal_I2C.h>
 
