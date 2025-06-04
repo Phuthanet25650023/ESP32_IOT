@@ -1,3 +1,4 @@
+/////////////////////////////////////////////////////////////////////////// LAB 01 //////////////////////////////////////////////////////////////////////////
 /*************************************************************
 
   ตัวอย่างง่ายๆ สำหรับส่งและรับข้อมูลกับ Blynk  
@@ -66,3 +67,112 @@ void loop()
   Blynk.run();
   timer.run();
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////// LAB 02 //////////////////////////////////////////////////////////////////////////
+/*************************************************************
+  ตัวอย่างแยก Sensor 5 ตัว ทำงานแยกกัน ส่งค่าขึ้น Blynk
+  อ่านค่าจาก ADC ขา A0 ถึง A4 บน ESP32
+*************************************************************/
+
+#define BLYNK_TEMPLATE_ID           "TMPL6N52EScLc"
+#define BLYNK_TEMPLATE_NAME         "Quickstart Template"
+#define BLYNK_AUTH_TOKEN            "j_pcDvPSFqHM8KC5Yq0vB9Pk1B6CnIOx"
+
+// เลือกบอร์ด ESP32 หรือ ESP8266
+//#define ESP8266
+#define ESP32
+
+#define BLYNK_PRINT Serial
+
+#if defined(ESP8266)
+  #include <ESP8266WiFi.h>
+  #include <BlynkSimpleEsp8266.h>
+#elif defined(ESP32)
+  #include <WiFi.h>
+  #include <BlynkSimpleEsp32.h>
+#else
+  #error "กรุณากำหนดบอร์ด ESP8266 หรือ ESP32"
+#endif
+
+char ssid[] = "Elite_Ultimate_Archer_2.4G";
+char pass[] = "24776996";
+
+BlynkTimer timer;
+
+// กำหนดขา ADC (ESP32 ใช้ GPIO แทน A0-A4)
+const int sensorPins[5] = {36, 39, 34, 35, 32};  // A0=GPIO36, A1=GPIO39, A2=GPIO34, A3=GPIO35, A4=GPIO32
+
+void connectWiFi() {
+  Serial.print("Connecting to WiFi...");
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.print("Connected! IP: ");
+  Serial.println(WiFi.localIP());
+}
+
+void connectBlynk() {
+  Blynk.begin(BLYNK_AUTH_TOKEN, WiFi.SSID().c_str(), pass);
+  Serial.println("Connecting to Blynk...");
+  while (!Blynk.connected()) {
+    Blynk.run();
+    delay(100);
+    Serial.print(".");
+  }
+  Serial.println("\nBlynk connected!");
+}
+
+// ส่งค่า ADC sensor 1-5 แยกฟังก์ชัน
+void sendSensor1() {
+  int val = random(0, 100);//analogRead(sensorPins[0]);
+  Blynk.virtualWrite(V10, val);
+  Serial.print("Sensor1 (A0) = "); Serial.println(val);
+}
+
+void sendSensor2() {
+  int val = random(0, 1000);//analogRead(sensorPins[1]);
+  Blynk.virtualWrite(V11, val);
+  Serial.print("Sensor2 (A1) = "); Serial.println(val);
+}
+
+void sendSensor3() {
+  int val = random(0, 2000);//analogRead(sensorPins[2]);
+  Blynk.virtualWrite(V12, val);
+  Serial.print("Sensor3 (A2) = "); Serial.println(val);
+}
+
+void sendSensor4() {
+  int val = random(0, 3000);//analogRead(sensorPins[3]);
+  Blynk.virtualWrite(V13, val);
+  Serial.print("Sensor4 (A3) = "); Serial.println(val);
+}
+
+void sendSensor5() {
+  int val = random(0, 4095);//analogRead(sensorPins[4]);
+  Blynk.virtualWrite(V14, val);
+  Serial.print("Sensor5 (A4) = "); Serial.println(val);
+}
+
+void setup() {
+  Serial.begin(115200);
+  connectWiFi();
+
+  // ไม่ต้องใช้ randomSeed เพราะอ่านค่าจริง
+
+  connectBlynk();
+
+  timer.setInterval(10000L, sendSensor1);    // Sensor 1 ทุก 10 วินาที
+  timer.setInterval(11000L, sendSensor2);    // Sensor 2 ทุก 11 วินาที
+  timer.setInterval(12000L, sendSensor3);    // Sensor 3 ทุก 12 วินาที
+  timer.setInterval(12500L, sendSensor4);    // Sensor 4 ทุก 12.5 วินาที
+  timer.setInterval(13000L, sendSensor5);    // Sensor 5 ทุก 13 วินาที
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
+
