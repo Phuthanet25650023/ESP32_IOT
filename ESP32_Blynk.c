@@ -150,11 +150,7 @@ void sendSensor4() {
   Serial.print("Sensor4 (A3) = "); Serial.println(val);
 }
 
-void sendSensor5() {
-  int val = random(0, 4095);//analogRead(sensorPins[4]);
-  Blynk.virtualWrite(V14, val);
-  Serial.print("Sensor5 (A4) = "); Serial.println(val);
-}
+
 
 void setup() {
   Serial.begin(115200);
@@ -168,7 +164,7 @@ void setup() {
   timer.setInterval(11000L, sendSensor2);    // Sensor 2 ทุก 11 วินาที
   timer.setInterval(12000L, sendSensor3);    // Sensor 3 ทุก 12 วินาที
   timer.setInterval(12500L, sendSensor4);    // Sensor 4 ทุก 12.5 วินาที
-  timer.setInterval(13000L, sendSensor5);    // Sensor 5 ทุก 13 วินาที
+ 
 }
 
 void loop() {
