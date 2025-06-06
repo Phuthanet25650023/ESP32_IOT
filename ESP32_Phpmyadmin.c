@@ -64,22 +64,22 @@ void loop() {
 #include <MySQL_Cursor.h>           // สำหรับส่ง query SQL
 #include <WebServer.h>              // สำหรับสร้าง HTTP Web Server บน ESP32
 
-// ✅ ตั้งค่า WiFi
+// ตั้งค่า WiFi
 const char* ssid = "Elite_Ultimate_Archer_2.4G";     // ชื่อ WiFi
 const char* password = "24776996";                   // รหัสผ่าน WiFi
 
-// ✅ ตั้งค่า MySQL Server
+// ตั้งค่า MySQL Server
 IPAddress server_ip(192, 168, 0, 146);                // IP ของ MySQL Server (เครื่องปลายทาง)
 char user[] = "cartoon2477";                         // ชื่อผู้ใช้ MySQL
 char password_mysql[] = "24776996";                  // รหัสผ่าน MySQL
 char database[] = "test";                            // ชื่อฐานข้อมูล
 
-// ✅ สร้างตัวแปรสำหรับเชื่อมต่อ
+// สร้างตัวแปรสำหรับเชื่อมต่อ
 WiFiClient client;
 MySQL_Connection conn((Client *)&client);
 WebServer server(80);                                // สร้าง Web Server ที่พอร์ต 80
 
-// ✅ ฟังก์ชันเมื่อเข้าเว็บ root "/"
+// ฟังก์ชันเมื่อเข้าเว็บ root "/"
 void handleRoot() {
   // ถ้ายังไม่เชื่อมต่อ MySQL ให้เชื่อมใหม่
   if (!conn.connected()) {
@@ -96,7 +96,7 @@ void handleRoot() {
 
   column_names *cols = cur->get_columns();  // เอาชื่อคอลัมน์
 
-  // ✅ เริ่มสร้าง HTML
+  // เริ่มสร้าง HTML
   String html = R"rawliteral(
     <!DOCTYPE html>
     <html>
@@ -119,13 +119,13 @@ void handleRoot() {
         <tr>
   )rawliteral";
 
-  // ✅ เพิ่มหัวตารางจากชื่อคอลัมน์
+  // เพิ่มหัวตารางจากชื่อคอลัมน์
   for (int i = 0; i < cols->num_fields; i++) {
     html += "<th>" + String(cols->fields[i]->name) + "</th>";
   }
   html += "</tr>";
 
-  // ✅ แสดงข้อมูลในตาราง
+  // แสดงข้อมูลในตาราง
   row_values *row = NULL;
   do {
     row = cur->get_next_row();
@@ -144,7 +144,7 @@ void handleRoot() {
   server.send(200, "text/html", html);  // ส่งเว็บให้ browser
 }
 
-// ✅ ฟังก์ชัน setup() เริ่มทำงานเมื่อเปิดเครื่อง
+// ฟังก์ชัน setup() เริ่มทำงานเมื่อเปิดเครื่อง
 void setup() {
   Serial.begin(115200);                // เริ่ม serial monitor
   WiFi.begin(ssid, password);          // เชื่อมต่อ WiFi
@@ -173,7 +173,7 @@ void setup() {
   Serial.println("HTTP server started");
 }
 
-// ✅ ฟังก์ชัน loop() จะทำงานตลอดเวลา
+// ฟังก์ชัน loop() จะทำงานตลอดเวลา
 void loop() {
   //////////////////////////////////////  เพิ่มข้อมูล   /////////////////////////////////////
   float value = random(20, 35); // จำลองค่าจาก sensor
