@@ -1,3 +1,21 @@
+-- สร้างตาราง sensors
+CREATE TABLE sensors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sensor_name VARCHAR(100) NOT NULL,
+    value FLOAT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- เพิ่มข้อมูลลงในตาราง sensors
+INSERT INTO sensors (sensor_name, value) VALUES 
+('Temperature Sensor', 25.5),
+('Humidity Sensor', 60.2),
+('Light Sensor', 300.0);
+
+
+
+
 //////////////////////////// lab 1 /////////////////////////////////////// ส่งข้อมูลเข้า Phpmyadmin
 /*#include <WiFi.h>
 #include <MySQL_Connection.h>
@@ -175,7 +193,7 @@ void setup() {
 
 // ฟังก์ชัน loop() จะทำงานตลอดเวลา
 void loop() {
-  //////////////////////////////////////  เพิ่มข้อมูล   /////////////////////////////////////
+//////////////////////////////////////  เพิ่มข้อมูล   /////////////////////////////////////
   float value = random(20, 35); // จำลองค่าจาก sensor
   char query[256];
 
@@ -193,7 +211,7 @@ void loop() {
   } else {
     Serial.println("MySQL not connected.");
   }
-  ///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
   server.handleClient();               // รอและตอบสนองคำขอจาก browser
   delay(10000);
 }
