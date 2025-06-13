@@ -63,3 +63,21 @@ void DataMoveR()
   delay(250);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+//https://maxpromer.github.io/LCD-Character-Creator/
+//https://chareditor.com/
+byte customChar[] = {
+  B11011,
+  B11111,
+  B01110,
+  B01110,
+  B00100,
+  B10001,
+  B11111,
+  B11111
+};
+lcd.init(); // initialize the lcd
+lcd.home();
+lcd.createChar(0, customChar);
+lcd.write(0);
+//////////////////////////////////////////////////////////////////////////
