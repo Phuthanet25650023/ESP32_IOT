@@ -52,3 +52,14 @@ void loop() {
   delay(200); // หน่วงเวลาเล็กน้อยเพื่อลดการแสดงผลซ้ำ
 }
 ////////////////////////////////////////////////////////////////////////////////
+void DataMoveL()
+{
+  lcd.scrollDisplayLeft(); 
+  delay(250);
+}
+void DataMoveR()
+{
+  lcd.scrollDisplayRight(); 
+  delay(250);
+}
+
