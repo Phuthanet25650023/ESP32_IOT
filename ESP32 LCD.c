@@ -69,12 +69,13 @@ void DataMoveR()
 
 
 
+
 #include <LiquidCrystal_I2C.h>
 
 // สร้างตัวอักษรพิเศษ love1 และ love2
 byte love1[] = { B01010, B11111, B01110, B00100, B00000, B00000, B01010, B11111};
 byte love2[] = { B01110, B00100, B00000, B00000, B01010, B11111, B01110, B00100};
-byte vlove[]={B00000, B00000, B01010, B11111, B11111, B01110, B00100, B00000};
+byte vlove[] = {B00000, B00000, B01010, B11111, B11111, B01110, B00100, B00000};
 byte loveinterrupt1[] {B10101, B00000, B10001, B11011, B11111, B11111, B10101, B00000};
 byte loveinterrupt2[] {B10001, B11011, B11111, B11111, B10101, B00000, B10001, B11011};
 // สร้างวัตถุ LCD (I2C address 0x27, จอ 20x4)
@@ -83,7 +84,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 void setup() {
   lcd.init();           // เริ่มต้น LCD
   lcd.backlight();      // เปิดไฟพื้นหลัง
-  lcd.createChar(4, vlove); 
+  lcd.createChar(4, vlove);
   lcd.createChar(0, love1);  // สร้างตัวอักษรที่ตำแหน่ง 0
   lcd.createChar(1, love2);  // สร้างตัวอักษรที่ตำแหน่ง 1
   lcd.createChar(2, loveinterrupt1);  // สร้างตัวอักษรที่ตำแหน่ง 0
@@ -108,9 +109,8 @@ void loop() {
     case 4:
       Switch5();
       break;
-    lcd.clear();
-
   }
+  lcd.clear();
 
 }
 void Switch5()
