@@ -67,6 +67,7 @@ void DataMoveR()
 //https://maxpromer.github.io/LCD-Character-Creator/
 //https://chareditor.com/
 
+
 #include <LiquidCrystal_I2C.h>
 
 // สร้างตัวอักษรพิเศษ love1 และ love2
@@ -103,6 +104,7 @@ void loop() {
     case 0:
       Switch1();
       break;
+    lcd.clear()
 
   }
 
