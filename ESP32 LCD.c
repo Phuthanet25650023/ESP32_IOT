@@ -127,11 +127,11 @@ void Switch5()
 void Switch4()
 {
   lcd.clear();
-  for (int i = 0 ; i < 20 ; i++)
+  for (int i = 0 ; i < 32 ; i++)
   {
-    lcd.setCursor(random(i), 0);
+    lcd.setCursor(random(100) % 16, 0);
     lcd.write(byte(0));
-    lcd.setCursor(random(i), 1);
+    lcd.setCursor(random(100) % 16, 1);
     lcd.write(byte(1));
     delay(100);
   }
@@ -200,5 +200,6 @@ void Switch1()
   }
   delay(500);
 }
+
 
 //////////////////////////////////////////////////////////////////////////
