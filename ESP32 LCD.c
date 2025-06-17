@@ -104,7 +104,7 @@ void loop() {
     case 0:
       Switch1();
       break;
-    lcd.clear()
+    lcd.clear();
 
   }
 
