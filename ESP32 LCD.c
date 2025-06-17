@@ -90,7 +90,7 @@ void setup() {
 }
 
 void loop() {
-  switch (random(4))
+  switch (random(5))
   {
     case 1:
       Switch2();
@@ -104,10 +104,25 @@ void loop() {
     case 0:
       Switch1();
       break;
+    case 4:
+      Switch5();
+      break;
     lcd.clear();
 
   }
 
+}
+void Switch5()
+{
+  for (int i = 16 ; i > 0 ; i--)
+  {
+    lcd.clear();
+    lcd.setCursor(i, 0);
+    lcd.write(byte(2));
+    lcd.setCursor(i, 1);
+    lcd.write(byte(3));
+    delay(100);
+  }
 }
 void Switch4()
 {
