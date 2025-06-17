@@ -66,18 +66,122 @@ void DataMoveR()
 //////////////////////////////////////////////////////////////////////////////
 //https://maxpromer.github.io/LCD-Character-Creator/
 //https://chareditor.com/
-byte customChar[] = {
-  B11011,
-  B11111,
-  B01110,
-  B01110,
-  B00100,
-  B10001,
-  B11111,
-  B11111
-};
-lcd.init(); // initialize the lcd
-lcd.home();
-lcd.createChar(0, customChar);
-lcd.write(0);
+
+#include <LiquidCrystal_I2C.h>
+
+// สร้างตัวอักษรพิเศษ love1 และ love2
+byte love1[] = { B01010, B11111, B01110, B00100, B00000, B00000, B01010, B11111};
+byte love2[] = { B01110, B00100, B00000, B00000, B01010, B11111, B01110, B00100};
+
+byte loveinterrupt1[] {B10101, B00000, B10001, B11011, B11111, B11111, B10101, B00000};
+byte loveinterrupt2[] {B10001, B11011, B11111, B11111, B10101, B00000, B10001, B11011};
+// สร้างวัตถุ LCD (I2C address 0x27, จอ 20x4)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+void setup() {
+  lcd.init();           // เริ่มต้น LCD
+  lcd.backlight();      // เปิดไฟพื้นหลัง
+
+  lcd.createChar(0, love1);  // สร้างตัวอักษรที่ตำแหน่ง 0
+  lcd.createChar(1, love2);  // สร้างตัวอักษรที่ตำแหน่ง 1
+  lcd.createChar(2, loveinterrupt1);  // สร้างตัวอักษรที่ตำแหน่ง 0
+  lcd.createChar(3, loveinterrupt2);  // สร้างตัวอักษรที่ตำแหน่ง 1
+}
+
+void loop() {
+  switch (random(4))
+  {
+    case 1:
+      Switch2();
+      break;
+    case 2:
+      Switch3();
+      break;
+    case 3:
+      Switch4();
+      break;
+    case 0:
+      Switch1();
+      break;
+
+  }
+
+}
+void Switch4()
+{
+  lcd.clear();
+  for (int i = 0 ; i < 20 ; i++)
+  {
+    lcd.setCursor(random(i), 0);
+    lcd.write(byte(0));
+    lcd.setCursor(random(i), 1);
+    lcd.write(byte(1));
+    delay(100);
+  }
+
+}
+void Switch3()
+{
+  for (int i = 0 ; i < 16 ; i++)
+  {
+    lcd.clear();
+    lcd.setCursor(i, 0);
+    lcd.write(byte(0));
+    lcd.setCursor(i, 1);
+    lcd.write(byte(1));
+    delay(100);
+  }
+}
+void Switch2()
+{
+  for (int i = 0 ; i < 16 ; i++)
+  {
+    lcd.setCursor(i, 0);
+    if (i % 2 == 0) lcd.write(byte(0));
+
+    lcd.setCursor(i, 1);
+    if (i % 2 == 0) lcd.write(byte(1));
+
+    //delay(100);
+  }
+  delay(500);
+  for (int i = 0 ; i < 16 ; i++)
+  {
+    lcd.setCursor(i, 0);
+    if (i % 2 == 0) lcd.write(byte(2));
+
+    lcd.setCursor(i, 1);
+    if (i % 2 == 0) lcd.write(byte(3));
+
+    //delay(100);
+  }
+  delay(500);
+}
+
+void Switch1()
+{
+  for (int i = 0 ; i < 16 ; i++)
+  {
+    lcd.setCursor(i, 0);
+    if (i % 2 == 0) lcd.write(byte(0));
+    else lcd.write(byte(2));
+    lcd.setCursor(i, 1);
+    if (i % 2 == 0) lcd.write(byte(1));
+    else lcd.write(byte(3));
+    //delay(100);
+  }
+  delay(500);
+  for (int i = 0 ; i < 16 ; i++)
+  {
+    lcd.setCursor(i, 0);
+    if (i % 2 == 0) lcd.write(byte(2));
+    else lcd.write(byte(0));
+    lcd.setCursor(i, 1);
+    if (i % 2 == 0) lcd.write(byte(3));
+    else lcd.write(byte(1));
+    //delay(100);
+  }
+  delay(500);
+}
+
 //////////////////////////////////////////////////////////////////////////
