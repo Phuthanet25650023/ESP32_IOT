@@ -154,6 +154,23 @@ int procress() {
   // 0.0343 = ความเร็วเสียง (cm/microsecond)  หาร 2 เพราะเวลาที่วัดเป็นไป-กลับ
 }
 ///////////////////////////////////////////////////////////////////////////////
+int LED_PIN[] = {19, 18, 5, 17, 16};  // กำหนดขา GPIO สำหรับ LED 5 ตัว (แต่ใช้แค่ 4 ตัวในโค้ด)
+int vol = 34;                         // กำหนดขา GPIO 34 สำหรับอ่านค่า Analog (volume sensor)
+int TRIGGER_PIN = 25;                 // ขา Trigger ของเซ็นเซอร์วัดระยะทาง Ultrasonic
+int ECHO_PIN = 33;                    // ขา Echo ของเซ็นเซอร์วัดระยะทาง Ultrasonic
+
+void setup() {
+  Serial.begin (115200);              // เริ่มต้นการสื่อสาร Serial ที่ baud rate 115200 เพื่อส่งข้อมูลขึ้น Serial Monitor
+
+  for (int i = 0; i < 4; i++) {
+    pinMode(LED_PIN[i], OUTPUT);     // ตั้งค่าขา LED ทั้ง 4 ขาเป็น OUTPUT เพื่อควบคุม LED
+  }
+
+  pinMode(vol, INPUT);               // ตั้งค่าขา GPIO 34 เป็น INPUT สำหรับอ่านค่าสัญญาณ Analog (volume sensor)
+  pinMode(TRIGGER_PIN, OUTPUT);      // ตั้งค่าขา Trigger เป็น OUTPUT เพื่อส่งสัญญาณ Ultrasonic
+  pinMode(ECHO_PIN, INPUT);          // ตั้งค่าขา Echo เป็น INPUT เพื่อรับสัญญาณ Ultrasonic ที่สะท้อนกลับ
+}
+
 void loop() {
   int distance = procress();   // อ่านระยะทาง (cm)
 
@@ -182,4 +199,18 @@ void loop() {
   }
 
   delay(50);  // ทำงานไวขึ้น
+}
+
+int procress() {
+  digitalWrite(TRIGGER_PIN, LOW);     // ปิดสัญญาณ Trigger เพื่อเตรียมส่งคลื่น Ultrasonic
+  delayMicroseconds(2);               // หน่วงเวลา 2 ไมโครวินาที
+
+  digitalWrite(TRIGGER_PIN, HIGH);    // ส่งสัญญาณ Trigger สูง เป็นเวลา 10 ไมโครวินาที เพื่อปล่อยคลื่น Ultrasonic
+  delayMicroseconds(10);              // หน่วงเวลา 10 ไมโครวินาที
+  digitalWrite(TRIGGER_PIN, LOW);     // ปิดสัญญาณ Trigger
+
+  long durasi = pulseIn(ECHO_PIN, HIGH);  // วัดระยะเวลาที่ Echo ขึ้นเป็น HIGH (หน่วยไมโครวินาที) คือเวลาคลื่นสะท้อนกลับ
+
+  return durasi * 0.0343 / 2;          // แปลงเวลาที่วัดได้เป็นระยะทาง (เซนติเมตร)
+  // 0.0343 = ความเร็วเสียง (cm/microsecond)  หาร 2 เพราะเวลาที่วัดเป็นไป-กลับ
 }
