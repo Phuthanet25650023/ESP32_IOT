@@ -154,3 +154,32 @@ int procress() {
   // 0.0343 = ความเร็วเสียง (cm/microsecond)  หาร 2 เพราะเวลาที่วัดเป็นไป-กลับ
 }
 ///////////////////////////////////////////////////////////////////////////////
+void loop() {
+  int distance = procress();   // อ่านระยะทาง (cm)
+
+  // แสดงผล Serial
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // คำนวณค่าความสว่างแต่ละ LED
+  for (int i = 0; i < 5; i++) {
+    int minDist = i * 70;         // เช่น LED0 = 0cm, LED1 = 20cm, ...
+    int maxDist = (i + 1) * 70;   // LED0 สูงสุดที่ 20cm, LED1 สูงสุดที่ 40cm ...
+
+    int brightness = 0;
+
+    if (distance < minDist) {
+      brightness = 255;  // สว่างสุด
+    } else if (distance < maxDist) {
+      // ค่อยๆ ลดแสงลงตามระยะ
+      brightness = map(distance, minDist, maxDist, 255, 0);
+    } else {
+      brightness = 0;  // ไกลเกินไป ดับ
+    }
+
+    analogWrite(LED_PIN[i], brightness);
+  }
+
+  delay(50);  // ทำงานไวขึ้น
+}
