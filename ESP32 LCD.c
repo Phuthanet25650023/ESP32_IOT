@@ -33,19 +33,16 @@ void loop() {
     lcd.print("Button 1 Pressed   ");
   }
 
-  if (button2Pressed) {
+  else if (button2Pressed) {
     Serial.println("Button 2 (GPIO 16) Pressed");
-    lcd.setCursor(0, 2);
+    lcd.setCursor(0, 1);
     lcd.print("Button 2 Pressed   ");
   }
 
-  // ถ้าไม่มีปุ่มถูกกด ให้ล้างข้อความ
-  if (!button1Pressed) {
+ 
+  else  // ถ้าไม่มีปุ่มถูกกด ให้ล้างข้อความ
+  {
     lcd.setCursor(0, 1);
-    lcd.print("                  "); // ล้างแถว
-  }
-  if (!button2Pressed) {
-    lcd.setCursor(0, 2);
     lcd.print("                  "); // ล้างแถว
   }
 
