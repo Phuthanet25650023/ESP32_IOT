@@ -74,9 +74,9 @@ void loop()
   อ่านค่าจาก ADC ขา A0 ถึง A4 บน ESP32
 *************************************************************/
 
-#define BLYNK_TEMPLATE_ID           "TMPL6N52EScLc"
-#define BLYNK_TEMPLATE_NAME         "Quickstart Template"
-#define BLYNK_AUTH_TOKEN            "j_pcDvPSFqHM8KC5Yq0vB9Pk1B6CnIOx"
+#define BLYNK_TEMPLATE_ID "TMPL6B_Hss8uP"
+#define BLYNK_TEMPLATE_NAME "PhuthanetValue"
+#define BLYNK_AUTH_TOKEN "Ti1cSR8encHvAlnVqa3Dzpsx8WiNbcPT"
 
 // เลือกบอร์ด ESP32 หรือ ESP8266
 //#define ESP8266
