@@ -80,9 +80,6 @@ void loop() {
 }
 ////////////////////////////////////////////////////////////////////////
 ///////////////////////////// lab 2 /////////////////////////////////////// ดึงข้อมูล และส่งข้อมูล ผ่าน Phpmyadmin แสดงข้อมูลผ่าน Web
-////////////////////////////////////
-//   Include Libraries
-////////////////////////////////////
 #include <WiFi.h>                    // สำหรับเชื่อมต่อ WiFi
 #include <MySQL_Connection.h>       // สำหรับเชื่อมต่อกับ MySQL Server
 #include <MySQL_Cursor.h>           // สำหรับส่งคำสั่ง SQL (query)
@@ -91,12 +88,12 @@ void loop() {
 ////////////////////////////////////
 //   WiFi & MySQL Configuration
 ////////////////////////////////////
-const char* ssid = "Elite_Ultimate_Archer_2.4G";   // ชื่อ WiFi
+const char* ssid = "Elite_Ultimate_2.4G";   // ชื่อ WiFi
 const char* password = "24776996";                 // รหัสผ่าน WiFi
 
-IPAddress server_ip(192, 168, 0, 146);             // IP Address ของ MySQL Server
-char user[] = "cartoon2477";                       // Username ของ MySQL
-char password_mysql[] = "24776996";                // Password ของ MySQL
+IPAddress server_ip(192, 168, 1, 147);             // IP Address ของ MySQL Server
+char user[] = "test";                       // Username ของ MySQL
+char password_mysql[] = "12345678";                // Password ของ MySQL
 char database[] = "data-set";                      // ชื่อ Database ที่ใช้
 
 ////////////////////////////////////
@@ -120,8 +117,10 @@ void handleRoot() {
 
   // สร้าง Cursor และ query ข้อมูลล่าสุดจากตาราง sensors
   MySQL_Cursor *cur = new MySQL_Cursor(&conn);
-  cur->execute("SELECT sensor_name, value, created_at FROM sensors ORDER BY created_at DESC LIMIT 5");
+  //cur->execute("SELECT sensor_name, value, created_at FROM sensors ORDER BY created_at DESC LIMIT 5");
+  cur->execute("SELECT sensor_name, value, created_at FROM sensors WHERE sensor_name='TempSensor1' ORDER BY created_at DESC LIMIT 5");
 
+  
   column_names *cols = cur->get_columns(); // ดึงชื่อคอลัมน์
 
   // เริ่มสร้าง HTML เพื่อตอบกลับ
@@ -209,7 +208,35 @@ void setup() {
 void loop() {
 
   server.handleClient();                 // ตรวจสอบว่ามี client เรียกหน้าเว็บหรือไม่
+  float value1 = random(0, 1000);
+  float value2 = random(1000, 3000);
+  float value3 = random(3000, 4095);               
+  char query[256];                          // สร้าง buffer สำหรับ query SQL
 
+  MySQL_Cursor *cur = new MySQL_Cursor(&conn);  // สร้าง Cursor ใหม่
+
+  
+ 
+  // ถ้าเชื่อมต่อ MySQL สำเร็จ ให้ส่งข้อมูล
+  if (conn.connected()) {
+    Serial.println("Sending data...");
+    // สร้างคำสั่ง SQL INSERT ใส่ค่าลงในตาราง
+    sprintf(query, "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor1', %.2f)", value1);
+    cur->execute(query);
+    delay(500);
+    sprintf(query, "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor2', %.2f)", value2);
+    cur->execute(query);
+    delay(500);
+    sprintf(query, "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor3', %.2f)", value3);
+    cur->execute(query);
+    delay(500);
+    Serial.println("Data inserted!");
+  } else {
+    Serial.println("MySQL not connected.");
+  }
+  
+
+  delete cur;                            // ลบ cursor คืนหน่วยความจำ
   delay(10000);                          // หน่วงเวลา 10 วินาที (จำลองส่งข้อมูลทุก 10 วิ)
 }
 
