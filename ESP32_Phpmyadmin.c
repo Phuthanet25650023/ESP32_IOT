@@ -17,19 +17,19 @@ INSERT INTO sensors (sensor_name, value) VALUES
 
 
 //////////////////////////// lab 1 /////////////////////////////////////// ส่งข้อมูลเข้า Phpmyadmin
-/*#include <WiFi.h>
+#include <WiFi.h>
 #include <MySQL_Connection.h>
 #include <MySQL_Cursor.h>
 
 // WiFi
-const char* ssid = "Elite_Ultimate_Archer_2.4G";
+const char* ssid = "Elite_Ultimate_2.4G";
 const char* password = "24776996";
 
 // MySQL Server 192.168.81.244
-IPAddress server_ip(192, 168, 81, 128); // IP ของ MySQL Server
-char user[] = "cartoon2477";
-char password_mysql[] = "24776996";
-char database[] = "test";
+IPAddress server_ip(192, 168, 1, 147); // IP ของ MySQL Server
+char user[] = "test";
+char password_mysql[] = "12345678";
+char database[] = "data-set";
 
 WiFiClient client;
 MySQL_Connection conn((Client *)&client);
@@ -56,10 +56,13 @@ void setup() {
 void loop() {
   float value = random(20, 35); // จำลองค่าจาก sensor
   char query[256];
-
+  
   // เพิ่มเลือกฐานข้อมูลก่อน (optional แต่แนะนำให้ชัดเจน)
+  /*MySQL_Cursor *cur = new MySQL_Cursor(&conn);
+  cur->execute("USE test");*/
+  snprintf(query, sizeof(query), "USE `%s`", database);
   MySQL_Cursor *cur = new MySQL_Cursor(&conn);
-  cur->execute("USE test");
+  cur->execute(query);  
 
   // สร้างคำสั่ง INSERT เข้ากับตาราง sensors
   sprintf(query, "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor', %.2f)", value);
