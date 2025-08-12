@@ -3,17 +3,17 @@
 #include <WiFiMulti.h>
 #include <ArtronShop_LineMessaging.h>
 
-#define WIFI_SSID "ชื่อ_WIFI.4G" // WiFi Name
-#define WIFI_PASSWORD "รหัส_WIFI" // WiFi Password
-
-#define LINE_TOKEN "Token" // Channel access token
-
+#define BUTTON_PIN 0 // ขา GPIO ที่ต่อปุ่ม
+#define WIFI_SSID "Elite_Ultimate_Archer_2.4G" // WiFi Name
+#define WIFI_PASSWORD "24776996" // WiFi Password
+#define LINE_TOKEN "TOKEN_LINE"  // Channel access token
+#define User "U30199332a9032acc6ff7b548e7246438" //userId / Group
 WiFiMulti wifiMulti;
 
 void setup() {
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
-
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
   Serial.println();
   Serial.println();
   Serial.println();
@@ -30,7 +30,7 @@ void setup() {
 
   LINE.begin(LINE_TOKEN);
 
-  if (LINE.send("User/Group ID", "Hello from ESP32 !")) { // Send "Hello from ESP32 !" to LINE with User/Group ID
+  if (LINE.send(User, "Hello from ESP32 !")) {  // Send "Hello from ESP32 !" to LINE with User/Group ID
     Serial.println("Send notify successful");
   } else {
     Serial.printf("Send notify fail. check your token (code: %d)\n", LINE.status_code);
@@ -38,7 +38,16 @@ void setup() {
 }
 
 void loop() {
-  
+
+  int buttonState = digitalRead(BUTTON_PIN);  // อ่านสถานะปุ่ม
+
+  if (buttonState == LOW) {  // ถ้าปุ่มถูกกด (Active Low)
+    if (LINE.send(User, "TEST Button !")) {  // Send "Hello from ESP32 !" to LINE with User/Group ID
+      Serial.println("Send notify successful");
+    } else {
+      Serial.printf("Send notify fail. check your token (code: %d)\n", LINE.status_code);
+    }
+  }
 }
 
 
