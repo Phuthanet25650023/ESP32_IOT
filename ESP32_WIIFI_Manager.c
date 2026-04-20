@@ -76,32 +76,23 @@ const char* sta_password = "24776996";
 // --- ตั้งค่าสำหรับโหมด Access Point (ปล่อยสัญญาณเอง) ---
 const char* ap_ssid = "ESP32_Control_Panel";
 const char* ap_password = "12345678";
-
-// กำหนด Static IP สำหรับโหมด AP (เพื่อให้จำเลข IP ง่ายๆ)
-IPAddress local_ip(192, 168, 4, 1);
-IPAddress gateway(192, 168, 4, 1);
-IPAddress subnet(255, 255, 255, 0);
-
 void initWiFi() {
   // 1. ตั้งโหมดเป็นทั้ง AP และ Station
   WiFi.mode(WIFI_AP_STA);
 
-  // 2. ตั้งค่าและเริ่มปล่อยสัญญาณ WiFi (Access Point)
-  // ควรเรียก softAPConfig ก่อน softAP
-  WiFi.softAPConfig(local_ip, gateway, subnet);
+  // 2. เริ่มปล่อยสัญญาณ WiFi (Access Point) แบบใช้ค่า Default IP
   WiFi.softAP(ap_ssid, ap_password);
 
   Serial.println("\n--- Access Point Started ---");
   Serial.printf("SSID: %s\n", ap_ssid);
   Serial.print("AP IP Address: ");
-  Serial.println(WiFi.softAPIP());
+  Serial.println(WiFi.softAPIP()); // จะแสดง 192.168.4.1 โดยอัตโนมัติ
 
   // 3. เริ่มเชื่อมต่อกับ WiFi บ้าน (Station)
   Serial.println("\n--- Connecting to Station WiFi ---");
   WiFi.begin(sta_ssid, sta_password);
 
   int attempts = 0;
-  // วนลูปรอการเชื่อมต่อ แต่มี Timeout (20 วินาที) เพื่อไม่ให้เครื่องค้าง
   while (WiFi.status() != WL_CONNECTED && attempts < 20) {
     delay(1000);
     Serial.print(".");
@@ -113,8 +104,7 @@ void initWiFi() {
     Serial.print("Station IP: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\nFailed to connect to Station WiFi (Timeout)");
-    // ถึงแม้จะต่อ WiFi บ้านไม่ได้ แต่สัญญาณ AP ที่ปล่อยออกมาจะยังใช้งานได้อยู่
+    Serial.println("\nFailed to connect to Station WiFi");
   }
 }
 
@@ -124,7 +114,7 @@ void setup() {
 }
 
 void loop() {
-  // ใส่ Code ควบคุมอื่นๆ ที่นี่
+  // Main code
 }
 
 
