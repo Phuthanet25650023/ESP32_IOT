@@ -1,9 +1,10 @@
 #https://manager.line.biz/
 #https://developers.line.biz/
+### https://www.imiconsystem.com/esp32-with-line-messaging-api/?srsltid=AfmBOoo-ySh40F-b_1P1iTI1HwPpgXoPcp47Gw0DSB4QBmL0gttn0MDb #####
 #################################################################### LAB 2 #################################################################
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <ArduinoJson.h>  // ติดตั้งจาก Library Manager: ArduinoJson โดย Benoit Blanchon
+#include <ArduinoJson.h>  
 
 const char* ssid = "Elite_Ultimate_2.4G";
 const char* password = "24776996";
@@ -65,7 +66,7 @@ void sendLineMessage(String message) {
 #################################################################### LAB 3 #################################################################
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <ArduinoJson.h>  // ติดตั้งจาก Library Manager: ArduinoJson โดย Benoit Blanchon
+#include <ArduinoJson.h> 
 
 const char* ssid = "Elite_Ultimate_2.4G";
 const char* password = "24776996";
