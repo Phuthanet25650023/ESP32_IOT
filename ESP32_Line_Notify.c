@@ -11,7 +11,7 @@ const char* password = "24776996";
 const char* ACCESS_TOKEN = "hjlXUd6E4YnlVxCM1AsFK2SS+fgVVu1cuMtB1PF7S1uDQHTNIN/s4qPT0uHZ2oqCMO4QS/XaiNj/36dPCLVIg5c+C3EYDwjHIHTel8cB0PlF2n4d3VyZoPtGbCKzSsqMHZQPg5o58DeaFpPfz3J/PQdB04t89/1O/w1cDnyilFU=";  // จาก LINE Developers
 const char* USER_ID = "U097413564a070c32b48472ef1233fc7f";  // User ID ที่จะส่งไป (Your User ID)
 
-void sendLineImage(String imageUrl);
+void sendLineImage(String imageUrl); // เพิ่ม function ส่งข้อความ
 
 void setup() {
   Serial.begin(115200);
@@ -73,9 +73,9 @@ const char* password = "24776996";
 const char* ACCESS_TOKEN = "hjlXUd6E4YnlVxCM1AsFK2SS+fgVVu1cuMtB1PF7S1uDQHTNIN/s4qPT0uHZ2oqCMO4QS/XaiNj/36dPCLVIg5c+C3EYDwjHIHTel8cB0PlF2n4d3VyZoPtGbCKzSsqMHZQPg5o58DeaFpPfz3J/PQdB04t89/1O/w1cDnyilFU=";  // จาก LINE Developers
 const char* USER_ID = "U097413564a070c32b48472ef1233fc7f";  // User ID ที่จะส่งไป (Your User ID)
 
-void sendLineImage(String imageUrl);
+void sendLineImage(String imageUrl);  // เพิ่ม function ส่งรูป
 void sendLineMessage(String message);
-void sendLineSticker(String packageId, String stickerId);
+void sendLineSticker(String packageId, String stickerId);  // เพิ่ม function ส่งสติกเกอร์
 
 void setup() {
   Serial.begin(115200);
