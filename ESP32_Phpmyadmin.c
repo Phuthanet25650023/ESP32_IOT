@@ -23,7 +23,7 @@ INSERT INTO sensors (sensor_name, value) VALUES
 
 // WiFi
 const char* ssid = "Elite_Ultimate_2.4G";
-const char* password = "24776996";
+const char* password = "********";
 
 // MySQL Server 192.168.81.244
 IPAddress server_ip(192, 168, 1, 147); // IP ของ MySQL Server
@@ -89,7 +89,7 @@ void loop() {
 //   WiFi & MySQL Configuration
 ////////////////////////////////////
 const char* ssid = "Elite_Ultimate_2.4G";   // ชื่อ WiFi
-const char* password = "24776996";                 // รหัสผ่าน WiFi
+const char* password = "*********";                 // รหัสผ่าน WiFi
 
 IPAddress server_ip(192, 168, 1, 135);             // IP Address ของ MySQL Server
 char user[] = "test";                       // Username ของ MySQL
