@@ -80,6 +80,7 @@ void loop() {
 }
 ////////////////////////////////////////////////////////////////////////
 ///////////////////////////// lab 2 /////////////////////////////////////// ดึงข้อมูล และส่งข้อมูล ผ่าน Phpmyadmin แสดงข้อมูลผ่าน Web
+
 #include <WiFi.h>                    // สำหรับเชื่อมต่อ WiFi
 #include <MySQL_Connection.h>       // สำหรับเชื่อมต่อกับ MySQL Server
 #include <MySQL_Cursor.h>           // สำหรับส่งคำสั่ง SQL (query)
@@ -123,41 +124,39 @@ void handleData() {
     }
   }
 
-  char query[256];
+  char query[320];   // query แบบรวม subquery ยาว ~280 ตัวอักษร ต้องเผื่อให้พอ (เดิม 256 ทำให้ overflow!)
   String json = "{\"sensors\":[";
 
   for (int i = 0; i < numSensors; i++) {
-    // ---- ค่าล่าสุด ----
-    MySQL_Cursor *cur = new MySQL_Cursor(&conn);
-    sprintf(query, "SELECT value, created_at FROM sensors WHERE sensor_name='%s' ORDER BY created_at DESC LIMIT 1", sensorNames[i]);
-    cur->execute(query);
-    cur->get_columns();
-    row_values *row = cur->get_next_row();
-
     String latestValue = "null";
     String latestTime  = "\"\"";
-    if (row != NULL) {
-      latestValue = row->values[0] ? String(row->values[0]) : "null";
-      latestTime  = "\"" + String(row->values[1] ? row->values[1] : "") + "\"";
-    }
-    while (cur->get_next_row() != NULL) {}   // ดึงจนหมดแถวเพื่ออ่าน EOF ปิด result set ให้ครบ
-    delete cur;
-
-    // ---- MAX / MIN / AVG ----
-    cur = new MySQL_Cursor(&conn);
-    sprintf(query, "SELECT MAX(value), MIN(value), AVG(value) FROM sensors WHERE sensor_name='%s'", sensorNames[i]);
-    cur->execute(query);
-    cur->get_columns();
-    row = cur->get_next_row();
-
     String maxV = "null", minV = "null", avgV = "null";
-    if (row != NULL) {
-      maxV = row->values[0] ? String(row->values[0]) : "null";
-      minV = row->values[1] ? String(row->values[1]) : "null";
-      avgV = row->values[2] ? String(row->values[2]) : "null";
+
+    // ---- รวมค่าล่าสุด + MAX/MIN/AVG ไว้ใน query เดียว ลด round-trip ไป MySQL ----
+    if (conn.connected()) {
+      MySQL_Cursor *cur = new MySQL_Cursor(&conn);
+      snprintf(query, sizeof(query),
+        "SELECT "
+        "(SELECT value FROM sensors WHERE sensor_name='%s' ORDER BY created_at DESC LIMIT 1), "
+        "(SELECT created_at FROM sensors WHERE sensor_name='%s' ORDER BY created_at DESC LIMIT 1), "
+        "MAX(value), MIN(value), AVG(value) "
+        "FROM sensors WHERE sensor_name='%s'",
+        sensorNames[i], sensorNames[i], sensorNames[i]);
+      if (cur->execute(query)) {
+        cur->get_columns();
+        row_values *row = cur->get_next_row();
+        if (row != NULL) {
+          latestValue = row->values[0] ? String(row->values[0]) : "null";
+          latestTime  = "\"" + String(row->values[1] ? row->values[1] : "") + "\"";
+          maxV        = row->values[2] ? String(row->values[2]) : "null";
+          minV        = row->values[3] ? String(row->values[3]) : "null";
+          avgV        = row->values[4] ? String(row->values[4]) : "null";
+        }
+        while (cur->get_next_row() != NULL) {}   // ดึงจนหมดแถวเพื่ออ่าน EOF ปิด result set ให้ครบ
+      }
+      // execute() ล้มเหลว (เช่น connection timeout) -> ข้ามไปเลย ไม่แตะ get_columns()/get_next_row()
+      delete cur;
     }
-    while (cur->get_next_row() != NULL) {}   // ดึงจนหมดแถวเพื่ออ่าน EOF ปิด result set ให้ครบ
-    delete cur;
 
     json += "{";
     json += "\"name\":\"" + String(sensorNames[i]) + "\",";
@@ -269,7 +268,7 @@ void handleRoot() {
   .card .latest {
     font-size: 2.6rem;
     font-weight: 700;
-    margin-bottom: 16px;
+    margin-bottom: 16px;  
   }
   .stats {
     display: grid;
@@ -432,14 +431,13 @@ void insertSensorData() {
   Serial.printf("Sending data... (free heap: %u bytes)\n", ESP.getFreeHeap());
   MySQL_Cursor *cur = new MySQL_Cursor(&conn);
 
-  sprintf(query, "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor1', %.2f)", value1);
+  snprintf(query, sizeof(query), "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor1', %.2f)", value1);
   cur->execute(query);
-  sprintf(query, "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor2', %.2f)", value2);
+  snprintf(query, sizeof(query), "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor2', %.2f)", value2);
   cur->execute(query);
-  sprintf(query, "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor3', %.2f)", value3);
+  snprintf(query, sizeof(query), "INSERT INTO sensors (sensor_name, value) VALUES ('TempSensor3', %.2f)", value3);
   cur->execute(query);
 
   delete cur;
   Serial.printf("Data inserted! (free heap: %u bytes)\n", ESP.getFreeHeap());
 }
-
