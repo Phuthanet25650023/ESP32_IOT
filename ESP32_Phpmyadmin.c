@@ -80,7 +80,6 @@ void loop() {
 }
 ////////////////////////////////////////////////////////////////////////
 ///////////////////////////// lab 2 /////////////////////////////////////// ดึงข้อมูล และส่งข้อมูล ผ่าน Phpmyadmin แสดงข้อมูลผ่าน Web
-
 #include <WiFi.h>                    // สำหรับเชื่อมต่อ WiFi
 #include <MySQL_Connection.h>       // สำหรับเชื่อมต่อกับ MySQL Server
 #include <MySQL_Cursor.h>           // สำหรับส่งคำสั่ง SQL (query)
@@ -109,6 +108,30 @@ WebServer server(80);                              // สร้าง Web Server
 ////////////////////////////////////
 const char* sensorNames[] = {"TempSensor1", "TempSensor2", "TempSensor3"};
 const int numSensors = 3;
+
+////////////////////////////////////
+//   Clear-All Endpoint (/clear) - ลบข้อมูลเซนเซอร์ทั้งหมดในตาราง
+////////////////////////////////////
+void handleClear() {
+  if (!conn.connected()) {
+    if (!conn.connect(server_ip, 3306, user, password_mysql, database)) {
+      server.send(500, "application/json", "{\"success\":false,\"error\":\"MySQL connection failed\"}");
+      return;
+    }
+  }
+
+  MySQL_Cursor *cur = new MySQL_Cursor(&conn);
+  bool ok = cur->execute("DELETE FROM sensors");
+  delete cur;
+
+  if (ok) {
+    Serial.println("All sensor data cleared.");
+    server.send(200, "application/json", "{\"success\":true}");
+  } else {
+    Serial.println("Failed to clear sensor data.");
+    server.send(500, "application/json", "{\"success\":false,\"error\":\"DELETE failed\"}");
+  }
+}
 
 ////////////////////////////////////
 //   JSON Data Endpoint (/data)
@@ -295,6 +318,89 @@ void handleRoot() {
   .stat .value.max { color: var(--max); }
   .stat .value.min { color: var(--min); }
   .stat .value.avg { color: var(--avg); }
+  @keyframes pulseFade {
+    0%   { opacity: 0.35; }
+    100% { opacity: 1; }
+  }
+  .pulse { animation: pulseFade 0.5s ease; }
+  .chart-card {
+    max-width: 1100px;
+    margin: 20px auto 0;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .chart-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .chart-head h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--accent);
+  }
+  .chart-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .chart-wrap {
+    position: relative;
+  }
+  #chart {
+    width: 100%;
+    height: 260px;
+    display: block;
+  }
+  .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: #0f172a;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    color: var(--text);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    transform: translate(-50%, -110%);
+    z-index: 5;
+  }
+  .chart-tooltip .row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .chart-tooltip .row .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .chart-tooltip .time { color: var(--muted); font-size: 0.7rem; margin-bottom: 2px; }
+  .btn-danger {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
   footer {
     max-width: 1100px;
     margin: 20px auto 0;
@@ -308,9 +414,21 @@ void handleRoot() {
   <header>
     <h1>🌡️ Sensor Dashboard</h1>
     <div class="status"><span id="dot" class="dot"></span><span id="statusText">Connecting...</span></div>
+    <button id="clearBtn" class="btn-danger">ล้างข้อมูลทั้งหมด</button>
   </header>
 
   <div id="cards"></div>
+
+  <div class="chart-card">
+    <div class="chart-head">
+      <h2>แนวโน้มค่าที่วัดได้ (Trend)</h2>
+      <div id="chartLegend" class="chart-legend"></div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+      <div id="chartTooltip" class="chart-tooltip" hidden></div>
+    </div>
+  </div>
 
   <footer id="updated">Last update: -</footer>
 
@@ -321,23 +439,55 @@ function fmt(v) {
   return (v === null || v === undefined || v === '') ? '--' : Number(v).toFixed(2);
 }
 
-function render(sensors) {
+let cardsBuilt = false;
+
+// สร้างโครงการ์ดแค่ครั้งเดียว (ไม่ทำลาย/สร้าง DOM ใหม่ทุกรอบ -> ไม่กระพริบ)
+function buildCards(sensors) {
   const container = document.getElementById('cards');
   container.innerHTML = '';
   sensors.forEach(s => {
     const card = document.createElement('div');
     card.className = 'card';
+    card.dataset.name = s.name;
     card.innerHTML =
       '<h2>' + s.name + '</h2>' +
-      '<div class="time">' + (s.time || '') + '</div>' +
-      '<div class="latest">' + fmt(s.latest) + '</div>' +
+      '<div class="time" data-f="time"></div>' +
+      '<div class="latest" data-f="latest">--</div>' +
       '<div class="stats">' +
-        '<div class="stat"><span class="label">MAX</span><span class="value max">' + fmt(s.max) + '</span></div>' +
-        '<div class="stat"><span class="label">MIN</span><span class="value min">' + fmt(s.min) + '</span></div>' +
-        '<div class="stat"><span class="label">AVG</span><span class="value avg">' + fmt(s.avg) + '</span></div>' +
+        '<div class="stat"><span class="label">MAX</span><span class="value max" data-f="max">--</span></div>' +
+        '<div class="stat"><span class="label">MIN</span><span class="value min" data-f="min">--</span></div>' +
+        '<div class="stat"><span class="label">AVG</span><span class="value avg" data-f="avg">--</span></div>' +
       '</div>';
     container.appendChild(card);
   });
+  cardsBuilt = true;
+}
+
+// อัปเดตเฉพาะข้อความในการ์ดที่มีอยู่แล้ว พร้อม pulse เบา ๆ ตอนค่าเปลี่ยน
+function updateField(card, field, value, pulse) {
+  const el = card.querySelector('[data-f="' + field + '"]');
+  if (!el || el.textContent === value) return;
+  el.textContent = value;
+  if (pulse) {
+    el.classList.remove('pulse');
+    void el.offsetWidth;   // force reflow เพื่อให้ animation เล่นใหม่ทุกครั้ง
+    el.classList.add('pulse');
+  }
+}
+
+function render(sensors) {
+  if (!cardsBuilt) buildCards(sensors);
+
+  sensors.forEach(s => {
+    const card = document.querySelector('.card[data-name="' + s.name + '"]');
+    if (!card) return;
+    updateField(card, 'time', s.time || '');
+    updateField(card, 'latest', fmt(s.latest), true);
+    updateField(card, 'max', fmt(s.max), true);
+    updateField(card, 'min', fmt(s.min), true);
+    updateField(card, 'avg', fmt(s.avg), true);
+  });
+
   document.getElementById('updated').textContent = 'Last update: ' + new Date().toLocaleTimeString();
 }
 
@@ -346,16 +496,264 @@ function setStatus(online) {
   document.getElementById('statusText').textContent = online ? 'Online' : 'Offline';
 }
 
+////////////////////////////////////
+//   Trend Line Chart (Canvas, ไม่พึ่ง library ภายนอก)
+////////////////////////////////////
+const CHART_COLORS = ['#3987e5', '#d95926', '#199e70'];   // categorical palette (dark-mode steps)
+const CHART_SURFACE = '#1e293b';
+const CHART_GRID = '#334155';
+const CHART_AXIS = '#475569';
+const CHART_MUTED = '#94a3b8';
+const CHART_TEXT = '#e2e8f0';
+const MAX_POINTS = 20;
+
+const history = {};   // { sensorName: [{t: epochMs, v: number}] }
+let legendBuilt = false;
+let hoverPx = null;
+
+function parseServerTime(s) {
+  const iso = s.indexOf('T') >= 0 ? s : s.replace(' ', 'T');
+  const ms = Date.parse(iso);
+  return isNaN(ms) ? Date.now() : ms;
+}
+
+function updateHistory(sensors) {
+  sensors.forEach(s => {
+    if (s.latest === null || s.latest === undefined || !s.time) return;
+    const arr = history[s.name] || (history[s.name] = []);
+    const last = arr[arr.length - 1];
+    if (!last || last.timeStr !== s.time) {
+      arr.push({ t: parseServerTime(s.time), v: Number(s.latest), timeStr: s.time });
+      if (arr.length > MAX_POINTS) arr.shift();
+    }
+  });
+}
+
+function renderLegend(names) {
+  const el = document.getElementById('chartLegend');
+  el.innerHTML = names.map((name, i) => {
+    const color = CHART_COLORS[i % CHART_COLORS.length];
+    return '<span class="legend-item"><span class="legend-dot" style="background:' + color + '"></span>' + name + '</span>';
+  }).join('');
+  legendBuilt = true;
+}
+
+function niceStep(rawStep) {
+  const pow = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
+  const n = rawStep / pow;
+  let f;
+  if (n <= 1) f = 1; else if (n <= 2) f = 2; else if (n <= 5) f = 5; else f = 10;
+  return f * pow;
+}
+
+function drawChart() {
+  const canvas = document.getElementById('chart');
+  const tooltip = document.getElementById('chartTooltip');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 600;
+  const cssH = canvas.clientHeight || 260;
+  if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  const names = Object.keys(history);
+  if (!legendBuilt && names.length) renderLegend(names);
+
+  const allPoints = names.flatMap(n => history[n]);
+  if (allPoints.length < 2) {
+    ctx.fillStyle = CHART_MUTED;
+    ctx.font = '13px "Segoe UI", Arial, sans-serif';
+    ctx.fillText('กำลังรอข้อมูล...', 12, 20);
+    tooltip.hidden = true;
+    return;
+  }
+
+  const padL = 54, padR = 16, padT = 12, padB = 26;
+  const plotW = Math.max(10, cssW - padL - padR);
+  const plotH = Math.max(10, cssH - padT - padB);
+
+  let vMin = Math.min(...allPoints.map(p => p.v));
+  let vMax = Math.max(...allPoints.map(p => p.v));
+  if (vMin === vMax) { vMin -= 1; vMax += 1; }
+  const vPad = (vMax - vMin) * 0.12;
+  vMin -= vPad; vMax += vPad;
+
+  const tMin = Math.min(...allPoints.map(p => p.t));
+  let tMax = Math.max(...allPoints.map(p => p.t));
+  if (tMin === tMax) tMax = tMin + 1;
+
+  const xOf = t => padL + (t - tMin) / (tMax - tMin) * plotW;
+  const yOf = v => padT + (1 - (v - vMin) / (vMax - vMin)) * plotH;
+
+  // ---- Y gridlines + labels (ปัดเป็นตัวเลขกลม ๆ) ----
+  const rawStep = (vMax - vMin) / 4;
+  const step = niceStep(rawStep) || 1;
+  const firstTick = Math.ceil(vMin / step) * step;
+  ctx.strokeStyle = CHART_GRID;
+  ctx.lineWidth = 1;
+  ctx.fillStyle = CHART_MUTED;
+  ctx.font = '11px "Segoe UI", Arial, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let v = firstTick; v <= vMax; v += step) {
+    const y = yOf(v);
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(padL + plotW, y);
+    ctx.stroke();
+    ctx.fillText(v.toFixed(step < 1 ? 2 : 0), padL - 8, y);
+  }
+
+  // ---- X ticks (เวลา) ----
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const XTICKS = Math.min(5, allPoints.length);
+  for (let i = 0; i <= XTICKS; i++) {
+    const t = tMin + (tMax - tMin) * i / XTICKS;
+    const x = xOf(t);
+    const label = new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    ctx.fillText(label, Math.min(Math.max(x, padL + 20), padL + plotW - 20), padT + plotH + 8);
+  }
+
+  // ---- แกน ----
+  ctx.strokeStyle = CHART_AXIS;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padL, padT + plotH);
+  ctx.lineTo(padL + plotW, padT + plotH);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(padL, padT);
+  ctx.lineTo(padL, padT + plotH);
+  ctx.stroke();
+
+  // ---- เส้นกราฟ + จุด (Point) ของทั้ง 3 เซนเซอร์ ----
+  names.forEach((name, idx) => {
+    const pts = history[name];
+    if (!pts || pts.length === 0) return;
+    const color = CHART_COLORS[idx % CHART_COLORS.length];
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const x = xOf(p.t), y = yOf(p.v);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    pts.forEach(p => {
+      const x = xOf(p.t), y = yOf(p.v);
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = CHART_SURFACE;      // surface ring คั่นจุดกับเส้น
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  });
+
+  // ---- Hover crosshair + tooltip ----
+  if (hoverPx !== null && hoverPx >= padL && hoverPx <= padL + plotW) {
+    const tAtHover = tMin + (hoverPx - padL) / plotW * (tMax - tMin);
+
+    ctx.strokeStyle = CHART_MUTED;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(hoverPx, padT);
+    ctx.lineTo(hoverPx, padT + plotH);
+    ctx.stroke();
+
+    let rows = '';
+    let anyTimeStr = '';
+    names.forEach((name, idx) => {
+      const pts = history[name];
+      if (!pts || pts.length === 0) return;
+      let nearest = pts[0];
+      pts.forEach(p => { if (Math.abs(p.t - tAtHover) < Math.abs(nearest.t - tAtHover)) nearest = p; });
+      anyTimeStr = nearest.timeStr;
+      const color = CHART_COLORS[idx % CHART_COLORS.length];
+      rows += '<div class="row"><span class="dot" style="background:' + color + '"></span>' +
+              name + ': ' + nearest.v.toFixed(2) + '</div>';
+    });
+
+    tooltip.innerHTML = '<div class="time">' + anyTimeStr + '</div>' + rows;
+    tooltip.hidden = false;
+    tooltip.style.left = hoverPx + 'px';
+    tooltip.style.top = padT + 'px';
+  } else {
+    tooltip.hidden = true;
+  }
+}
+
+const chartCanvasEl = document.getElementById('chart');
+chartCanvasEl.addEventListener('mousemove', (e) => {
+  const rect = chartCanvasEl.getBoundingClientRect();
+  hoverPx = e.clientX - rect.left;
+  drawChart();
+});
+chartCanvasEl.addEventListener('mouseleave', () => {
+  hoverPx = null;
+  drawChart();
+});
+window.addEventListener('resize', drawChart);
+
 async function fetchData() {
   try {
     const res = await fetch('/data');
     const data = await res.json();
     render(data.sensors);
+    updateHistory(data.sensors);
+    drawChart();
     setStatus(true);
   } catch (e) {
     setStatus(false);
   }
 }
+
+////////////////////////////////////
+//   ปุ่มล้างข้อมูลทั้งหมดในฐานข้อมูล
+////////////////////////////////////
+document.getElementById('clearBtn').addEventListener('click', async () => {
+  if (!confirm('ยืนยันลบข้อมูลเซนเซอร์ทั้งหมดในฐานข้อมูล?\nการกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+
+  const btn = document.getElementById('clearBtn');
+  btn.disabled = true;
+  btn.textContent = 'กำลังลบ...';
+
+  try {
+    const res = await fetch('/clear', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      // เคลียร์สถานะฝั่ง browser ให้ตรงกับฐานข้อมูลทันที
+      Object.keys(history).forEach(k => delete history[k]);
+      document.querySelectorAll('.card').forEach(card => {
+        updateField(card, 'time', '');
+        updateField(card, 'latest', '--');
+        updateField(card, 'max', '--');
+        updateField(card, 'min', '--');
+        updateField(card, 'avg', '--');
+      });
+      drawChart();
+      alert('ลบข้อมูลทั้งหมดเรียบร้อยแล้ว');
+    } else {
+      alert('ลบข้อมูลไม่สำเร็จ: ' + (data.error || 'unknown error'));
+    }
+  } catch (e) {
+    alert('เชื่อมต่อกับ ESP32 ไม่สำเร็จ');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ล้างข้อมูลทั้งหมด';
+  }
+});
 
 fetchData();
 setInterval(fetchData, REFRESH_MS);
@@ -394,6 +792,7 @@ void setup() {
   // ตั้งค่า HTTP route
   server.on("/", handleRoot);               // หน้าเว็บหลัก (static HTML)
   server.on("/data", handleData);           // API คืนค่า JSON สำหรับอัปเดต Real-Time
+  server.on("/clear", HTTP_POST, handleClear); // API ลบข้อมูลเซนเซอร์ทั้งหมด
   server.begin();                           // เริ่มต้น HTTP server
   Serial.println("HTTP server started");
   Serial.printf("Free heap at startup: %u bytes\n", ESP.getFreeHeap());
