@@ -6,21 +6,24 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
+// Declarations เพื่อป้องกัน Error เรียกใช้งานฟังก์ชันก่อนประกาศ
+void callback(char* topic, byte* payload, unsigned int length); 
+
 // สร้าง client สำหรับใช้งาน WiFi และ MQTT
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
 // กำหนด WiFi ที่จะเชื่อมต่อ
-const char* ssid = "xxx";       // <-- เปลี่ยนเป็นชื่อ WiFi
-const char* password = "xxx";   // <-- เปลี่ยนเป็นรหัสผ่าน WiFi
+const char* ssid = "Rocketman";       // <-- เปลี่ยนเป็นชื่อ WiFi
+const char* password = "apollo11";   // <-- เปลี่ยนเป็นรหัสผ่าน WiFi
 
 // กำหนด MQTT Broker
 char *mqttServer = "broker.emqx.io";
 int mqttPort = 1883; 
 
-// กำหนด MQTT Topic (ให้แก้ xxx เป็นรหัส 3 ตัวท้ายของตนเอง)
-#define topic1 "MIIX/xxx/1"
-#define topic2 "MIIX/xxx/2"   // ยังไม่ได้ใช้งาน
+// กำหนด MQTT Topic
+#define topic1 "MIIX/006/1"   // Topic สำหรับส่งข้อมูลออก (Publish)
+#define topic2 "MIIX/006/2"   // Topic สำหรับรับข้อมูลเข้า (Subscribe)
 
 #define thisDevice 1           // รหัสของอุปกรณ์
 #define led 2                  // ขา GPIO ที่ต่อกับ LED
@@ -52,9 +55,15 @@ void reconnect()
     if (mqttClient.connect(clientId.c_str())) 
     {
       Serial.println("Connected.");
-      mqttClient.subscribe(topic2);  // subscribe หัวข้อ (ยังไม่ได้ใช้งาน)
+      
+      // Subscribe Topic 2 เพื่อรอรับข้อมูล
+      mqttClient.subscribe(topic2);  
+      Serial.println("Subscribed to: " topic2);
     }
-    delay(1000);      
+    else 
+    {
+      delay(1000); 
+    }     
   }
 }
 
@@ -83,7 +92,7 @@ void setup()
 void loop() 
 {
   if (!mqttClient.connected()) reconnect(); // ถ้ายังไม่เชื่อม MQTT ให้ reconnect
-  mqttClient.loop();                        // รอ message จาก MQTT
+  mqttClient.loop();                        // รอ message และรักษาการเชื่อมต่อ MQTT
 
   // เช็คเวลาผ่านไปเกิน delayTime หรือยัง (5 วินาที)
   if (millis() - lastMillis > delayTime)
@@ -100,14 +109,10 @@ void loop()
       if (value == 0) dir = 0;
     }
 
+    Serial.print("Sensor Value: ");
     Serial.println(value);  // แสดงค่า value ใน serial monitor
     
-    sendMQTT();             // ส่งค่าไปยัง MQTT
-
-    // กระพริบ LED
-    digitalWrite(led, HIGH); 
-    delay(100); 
-    digitalWrite(led, LOW);
+    sendMQTT();             // ส่งค่าไปยัง MQTT Topic 1
 
     lastMillis = millis();  // รีเซ็ตเวลา
   }
@@ -127,28 +132,41 @@ void sendMQTT()
 
   char out[128];
   serializeJson(doc, out);
-  mqttClient.publish(topic1, out);  // ส่งไปยัง MQTT topic
+  mqttClient.publish(topic1, out);  // ส่งไปยัง MQTT topic 1
   delay(10);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-// ฟังก์ชัน callback เมื่อได้รับ message MQTT
+// ฟังก์ชัน callback เมื่อได้รับ message จาก MQTT Broker
 void callback(char* topic, byte* payload, unsigned int length) 
 {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  
-  char str[length + 1];
-  int i = 0;
-
-  for (i = 0; i < length; i++) 
+  // แปลง payload เป็น String เพื่อใช้งานง่าย
+  String message = "";
+  for (int i = 0; i < length; i++) 
   {
-    Serial.print((char)payload[i]);
-    str[i] = (char)payload[i];
+    message += (char)payload[i];
   }
 
-  str[i] = 0; // สิ้นสุด string
-  String payload2 = str;
-  Serial.println(payload2);
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("]: ");
+  Serial.println(message);
+
+  // ตรวจสอบว่าข้อความมาจาก Topic 2 หรือไม่
+  if (String(topic) == topic2) 
+  {
+    // ตัวอย่างการนำข้อมูลไปใช้งาน:
+    // หากส่งข้อความ "ON" หรือ "1" เข้ามาที่ Topic 2 จะสั่งเปิด LED
+    if (message == "ON" || message == "1") 
+    {
+      digitalWrite(led, HIGH);
+      Serial.println("-> Action: LED ON");
+    } 
+    // หากส่งข้อความ "OFF" หรือ "0" สั่งปิด LED
+    else if (message == "OFF" || message == "0") 
+    {
+      digitalWrite(led, LOW);
+      Serial.println("-> Action: LED OFF");
+    }
+  }
 }
