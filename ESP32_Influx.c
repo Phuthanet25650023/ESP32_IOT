@@ -124,15 +124,22 @@ void loop()
 // ฟังก์ชันส่งข้อมูล MQTT
 void sendMQTT()
 {
-  StaticJsonDocument<128> doc;
-
-  doc["device"] = thisDevice;
-  doc["value1"] = value;
-  doc["value2"] = random(0, 200);   // กำหนด value2 ให้สุ่มค่าระหว่าง 0-199
-
   char out[128];
-  serializeJson(doc, out);
-  mqttClient.publish(topic1, out);  // ส่งไปยัง MQTT topic 1
+
+  // 1. ส่งข้อมูลชุดแรกไปที่ Topic 1
+  StaticJsonDocument<128> doc1;
+  doc1["device"] = thisDevice;
+  doc1["value1"] = value;
+  serializeJson(doc1, out);
+  mqttClient.publish(topic1, out);
+
+  // 2. ส่งข้อมูลอีกชุดไปที่ Topic 2
+  StaticJsonDocument<128> doc2;
+  doc2["device"] = thisDevice;
+  doc2["value2"] = random(0, 200);
+  serializeJson(doc2, out);
+  mqttClient.publish(topic2, out);
+
   delay(10);
 }
 
